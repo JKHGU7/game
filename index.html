@@ -1,27 +1,24 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>Simple Tetris</title>
-  <style>
-    body {
-      background: #111;
-      color: white;
-      text-align: center;
-      font-family: sans-serif;
-    }
-
-    canvas {
-      background: #222;
-      margin-top: 20px;
-      border: 2px solid #555;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Tetris Advanced</title>
+<style>
+  body {
+    background: #111;
+    color: white;
+    text-align: center;
+  }
+  canvas {
+    background: #222;
+    margin-top: 20px;
+  }
+</style>
 </head>
 <body>
 
-<h1>🧩 Mini Tetris</h1>
-<p>← → で移動 / ↓で加速</p>
+<h1>🧩 Tetris</h1>
+<p>← → 移動 / ↓ 加速</p>
 <canvas id="game" width="240" height="400"></canvas>
 
 <script>
@@ -34,95 +31,106 @@ const BLOCK = 20;
 
 let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
 
-const piece = {
-  shape: [[1,1],[1,1]],
-  x: 5,
-  y: 0
-};
+// ▼ 7種類のブロック
+const SHAPES = [
+  [[1,1,1,1]],               // I
+  [[1,1],[1,1]],             // O
+  [[0,1,0],[1,1,1]],         // T
+  [[1,0,0],[1,1,1]],         // L
+  [[0,0,1],[1,1,1]],         // J
+  [[1,1,0],[0,1,1]],         // S
+  [[0,1,1],[1,1,0]]          // Z
+];
+
+let piece = newPiece();
+
+function newPiece() {
+  const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+  return {
+    shape: shape,
+    x: 4,
+    y: 0
+  };
+}
 
 function drawBlock(x, y, color="cyan") {
   ctx.fillStyle = color;
   ctx.fillRect(x * BLOCK, y * BLOCK, BLOCK-1, BLOCK-1);
 }
 
-function drawBoard() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  board.forEach((row, y) => {
-    row.forEach((val, x) => {
-      if (val) drawBlock(x, y);
+  board.forEach((row,y)=>{
+    row.forEach((val,x)=>{
+      if(val) drawBlock(x,y,"#666");
     });
   });
 
-  piece.shape.forEach((row, dy) => {
-    row.forEach((val, dx) => {
-      if (val) drawBlock(piece.x + dx, piece.y + dy, "orange");
+  piece.shape.forEach((row,dy)=>{
+    row.forEach((val,dx)=>{
+      if(val) drawBlock(piece.x+dx,piece.y+dy,"orange");
     });
   });
 }
 
 function collide() {
-  return piece.shape.some((row, dy) => {
-    return row.some((val, dx) => {
-      if (!val) return false;
-      let x = piece.x + dx;
-      let y = piece.y + dy;
-      return y >= ROWS || x < 0 || x >= COLS || board[y][x];
+  return piece.shape.some((row,dy)=>{
+    return row.some((val,dx)=>{
+      if(!val) return false;
+      let x = piece.x+dx;
+      let y = piece.y+dy;
+      return y>=ROWS || x<0 || x>=COLS || board[y][x];
     });
   });
 }
 
 function merge() {
-  piece.shape.forEach((row, dy) => {
-    row.forEach((val, dx) => {
-      if (val) board[piece.y + dy][piece.x + dx] = 1;
+  piece.shape.forEach((row,dy)=>{
+    row.forEach((val,dx)=>{
+      if(val) board[piece.y+dy][piece.x+dx] = 1;
     });
   });
 }
 
 function clearLines() {
-  board = board.filter(row => row.some(cell => cell === 0));
-  while (board.length < ROWS) {
+  board = board.filter(row => row.some(cell => cell===0));
+  while(board.length < ROWS){
     board.unshift(Array(COLS).fill(0));
   }
 }
 
-function resetPiece() {
-  piece.x = 5;
-  piece.y = 0;
-}
-
 function drop() {
   piece.y++;
-  if (collide()) {
+  if(collide()){
     piece.y--;
     merge();
     clearLines();
-    resetPiece();
+    piece = newPiece();
   }
 }
 
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") {
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowLeft"){
     piece.x--;
-    if (collide()) piece.x++;
+    if(collide()) piece.x++;
   }
-  if (e.key === "ArrowRight") {
+  if(e.key==="ArrowRight"){
     piece.x++;
-    if (collide()) piece.x--;
+    if(collide()) piece.x--;
   }
-  if (e.key === "ArrowDown") {
+  if(e.key==="ArrowDown"){
     drop();
   }
 });
 
-function gameLoop() {
+function loop(){
   drop();
-  drawBoard();
-  setTimeout(gameLoop, 500);
+  draw();
+  setTimeout(loop,500);
 }
 
-gameLoop();
+loop();
 </script>
 
 </body>

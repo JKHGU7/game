@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Tetris</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      text-align: center;
+      font-family: sans-serif;
+    }
+
+    canvas {
+      background: #222;
+      margin-top: 20px;
+      border: 2px solid #555;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🧩 Mini Tetris</h1>
+<p>← → で移動 / ↓で加速</p>
+<canvas id="game" width="240" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const COLS = 12;
+const ROWS = 20;
+const BLOCK = 20;
+
+let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+
+const piece = {
+  shape: [[1,1],[1,1]],
+  x: 5,
+  y: 0
+};
+
+function drawBlock(x, y, color="cyan") {
+  ctx.fillStyle = color;
+  ctx.fillRect(x * BLOCK, y * BLOCK, BLOCK-1, BLOCK-1);
+}
+
+function drawBoard() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  board.forEach((row, y) => {
+    row.forEach((val, x) => {
+      if (val) drawBlock(x, y);
+    });
+  });
+
+  piece.shape.forEach((row, dy) => {
+    row.forEach((val, dx) => {
+      if (val) drawBlock(piece.x + dx, piece.y + dy, "orange");
+    });
+  });
+}
+
+function collide() {
+  return piece.shape.some((row, dy) => {
+    return row.some((val, dx) => {
+      if (!val) return false;
+      let x = piece.x + dx;
+      let y = piece.y + dy;
+      return y >= ROWS || x < 0 || x >= COLS || board[y][x];
+    });
+  });
+}
+
+function merge() {
+  piece.shape.forEach((row, dy) => {
+    row.forEach((val, dx) => {
+      if (val) board[piece.y + dy][piece.x + dx] = 1;
+    });
+  });
+}
+
+function clearLines() {
+  board = board.filter(row => row.some(cell => cell === 0));
+  while (board.length < ROWS) {
+    board.unshift(Array(COLS).fill(0));
+  }
+}
+
+function resetPiece() {
+  piece.x = 5;
+  piece.y = 0;
+}
+
+function drop() {
+  piece.y++;
+  if (collide()) {
+    piece.y--;
+    merge();
+    clearLines();
+    resetPiece();
+  }
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") {
+    piece.x--;
+    if (collide()) piece.x++;
+  }
+  if (e.key === "ArrowRight") {
+    piece.x++;
+    if (collide()) piece.x--;
+  }
+  if (e.key === "ArrowDown") {
+    drop();
+  }
+});
+
+function gameLoop() {
+  drop();
+  drawBoard();
+  setTimeout(gameLoop, 500);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>

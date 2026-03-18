@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Tetris Advanced</title>
+<title>Tetris Rotate</title>
 <style>
   body {
     background: #111;
@@ -18,7 +18,7 @@
 <body>
 
 <h1>🧩 Tetris</h1>
-<p>← → 移動 / ↓ 加速</p>
+<p>← → 移動 / ↓ 加速 / ↑ 回転</p>
 <canvas id="game" width="240" height="400"></canvas>
 
 <script>
@@ -31,29 +31,31 @@ const BLOCK = 20;
 
 let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
 
-// ▼ 7種類のブロック
 const SHAPES = [
-  [[1,1,1,1]],               // I
-  [[1,1],[1,1]],             // O
-  [[0,1,0],[1,1,1]],         // T
-  [[1,0,0],[1,1,1]],         // L
-  [[0,0,1],[1,1,1]],         // J
-  [[1,1,0],[0,1,1]],         // S
-  [[0,1,1],[1,1,0]]          // Z
+  [[1,1,1,1]],
+  [[1,1],[1,1]],
+  [[0,1,0],[1,1,1]],
+  [[1,0,0],[1,1,1]],
+  [[0,0,1],[1,1,1]],
+  [[1,1,0],[0,1,1]],
+  [[0,1,1],[1,1,0]]
 ];
 
 let piece = newPiece();
 
 function newPiece() {
   const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-  return {
-    shape: shape,
-    x: 4,
-    y: 0
-  };
+  return { shape: shape, x: 4, y: 0 };
 }
 
-function drawBlock(x, y, color="cyan") {
+// ★ 回転関数（90度）
+function rotate(matrix) {
+  return matrix[0].map((_, i) =>
+    matrix.map(row => row[i]).reverse()
+  );
+}
+
+function drawBlock(x, y, color="orange") {
   ctx.fillStyle = color;
   ctx.fillRect(x * BLOCK, y * BLOCK, BLOCK-1, BLOCK-1);
 }
@@ -69,7 +71,7 @@ function draw() {
 
   piece.shape.forEach((row,dy)=>{
     row.forEach((val,dx)=>{
-      if(val) drawBlock(piece.x+dx,piece.y+dy,"orange");
+      if(val) drawBlock(piece.x+dx,piece.y+dy);
     });
   });
 }
@@ -110,17 +112,30 @@ function drop() {
   }
 }
 
+// ★ キー操作
 document.addEventListener("keydown", e=>{
   if(e.key==="ArrowLeft"){
     piece.x--;
     if(collide()) piece.x++;
   }
+
   if(e.key==="ArrowRight"){
     piece.x++;
     if(collide()) piece.x--;
   }
+
   if(e.key==="ArrowDown"){
     drop();
+  }
+
+  // ★ 回転処理
+  if(e.key==="ArrowUp"){
+    const original = piece.shape;
+    piece.shape = rotate(piece.shape);
+
+    if(collide()){
+      piece.shape = original; // 衝突したら戻す
+    }
   }
 });
 
